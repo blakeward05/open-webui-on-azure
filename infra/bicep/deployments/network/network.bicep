@@ -25,7 +25,9 @@ param parAppGatewayDnsName string
 param parAppGwPublicIpName string
 param parApimPublicIpName string
 param parApimDnsName string
-
+param parApimNsgName string
+param parAcaNsgName string
+param parApimRouteName string
 
 resource containerAppEnv 'Microsoft.App/managedEnvironments@2026-01-01' existing = {
   scope: resourceGroup(parSpokeResourceGroupName)
@@ -36,36 +38,34 @@ resource containerAppEnv 'Microsoft.App/managedEnvironments@2026-01-01' existing
 // ========== MARK: Variables ==========
 var parContainerAppEnvDefaultDomain = containerAppEnv.properties.defaultDomain
 var parContainerAppStaticIp = containerAppEnv.properties.staticIp
-//var varNsgRules = loadJsonContent('../../../shared/nsg-rules.json')
+var varNsgRules = loadJsonContent('../../shared/nsg-rules.json')
 
 
-/* removing NSG rules
-// NSG for APIM Subnet
+
+// MARK: Network Security for NSG for APIM Subnet
 module modNsgApim 'br/public:avm/res/network/network-security-group:0.5.2' = {
   scope: resourceGroup(parHubResourceGroupName)
   params: {
-    name: '${parNamePrefix}-apim-nsg'
+    name: parApimNsgName
     location: parLocation
-    securityRules: parNsgRules
+    securityRules: varNsgRules
   }
 }
 
-// MARK: - Network Security Group
+// MARK: - Network Security Group for Container App
 module modNsgContainerApp 'br/public:avm/res/network/network-security-group:0.5.2' = {
   scope: resourceGroup(parSpokeResourceGroupName)
   params: {
-    name: '${parNamePrefix}-aca-nsg'
+    name: parAcaNsgName
     location: parLocation
   }
-  dependsOn: [modResourceGroup]
 }
-  */
 
-/*
 // Route Table for APIM Subnet (prevents forced tunneling)
 module modApimRouteTable 'br/public:avm/res/network/route-table:0.5.0' = {
+  scope: resourceGroup(parHubResourceGroupName)
   params: {
-    name: '${parNamePrefix}-apim-rt'
+    name: parApimRouteName
     location: parLocation
     routes: [
       {
@@ -78,7 +78,6 @@ module modApimRouteTable 'br/public:avm/res/network/route-table:0.5.0' = {
     ]
   }
 }
-  */
 
 
 // Public IP configurations for loop deployment
@@ -123,8 +122,8 @@ module modHubVirtualNetwork 'br/public:avm/res/network/virtual-network:0.7.1' = 
       {
         name: parApimSubnetName
         addressPrefix: parApimSubnetAddressPrefix
-        //networkSecurityGroupResourceId: modNsgApim.outputs.resourceId
-        //routeTableResourceId: modApimRouteTable.outputs.resourceId
+        networkSecurityGroupResourceId: modNsgApim.outputs.resourceId
+        routeTableResourceId: modApimRouteTable.outputs.resourceId
         serviceEndpoints: [
           'Microsoft.Storage'
           'Microsoft.Sql'
@@ -143,19 +142,6 @@ module modHubVirtualNetwork 'br/public:avm/res/network/virtual-network:0.7.1' = 
         addressPrefix: parPeSubnetAddressPrefix
       }
     ]
-    /* peering done in second step
-    peerings: !empty(parSpokeVirtualNetworkName) ? [
-      {
-        remoteVirtualNetworkResourceId: resourceId(subscription().subscriptionId, parSpokeResourceGroupName, 'Microsoft.Network/virtualNetworks', parSpokeVirtualNetworkName)
-        allowForwardedTraffic: true
-        allowGatewayTransit: false
-        allowVirtualNetworkAccess: true
-        useRemoteGateways: false
-        doNotVerifyRemoteGateways: true
-      }
-       
-    ] : []
-      */
   }
 }
 
@@ -171,29 +157,39 @@ module modSpokeVirtualNetwork 'br/public:avm/res/network/virtual-network:0.7.1' 
       {
         name: parAcaSubnetName
         addressPrefix: parAcaSubnetAddressPrefix
-        //networkSecurityGroupResourceId: modNsgContainerApp.outputs.resourceId
+        networkSecurityGroupResourceId: modNsgContainerApp.outputs.resourceId
         serviceEndpoints: [
           'Microsoft.Storage'
         ]
         delegation: 'Microsoft.App/environments'
       }
     ]
-     /* peering done in second step
-    // Spoke to Hub VNet peering
-    peerings: !empty(parHubVirtualNetworkName) ? [
-      {
-        remoteVirtualNetworkResourceId: resourceId(subscription().subscriptionId, parHubResourceGroupName, 'Microsoft.Network/virtualNetworks', parHubVirtualNetworkName)
-        allowForwardedTraffic: true
-        allowGatewayTransit: false
-        allowVirtualNetworkAccess: true
-        useRemoteGateways: false
-      }
-    ] : []
-     */
   }
 }
 
+// MARK: - Vnet Hub Peering
+module modVnetHubPeering'./network_hub_peering.bicep' = {
+  scope: resourceGroup(parHubResourceGroupName)
+  params: {
+    parHubVirtualNetworkName: parHubVirtualNetworkName
+    parSpokeVnetId: modSpokeVirtualNetwork.outputs.resourceId
+  }
+  dependsOn: [
+    modHubVirtualNetwork
+  ]
+}
 
+// MARK: - Vnet Spoke Peering
+module modVnetSpokePeering'./network_spoke_peering.bicep' = {
+  scope: resourceGroup(parSpokeResourceGroupName)
+  params: {
+    parSpokeVirtualNetworkName: parSpokeVirtualNetworkName
+    parHubVnetId: modHubVirtualNetwork.outputs.resourceId
+  }
+  dependsOn: [
+    modSpokeVirtualNetwork
+  ]
+}
 
 // Private DNS Zone for Container App
 module modPrivateDnsZone 'br/public:avm/res/network/private-dns-zone:0.8.0' = {
