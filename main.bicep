@@ -32,12 +32,12 @@ param parTrustedRootCertificateSecretName string
 param parSslCertificateSecretName string
 param parTags TagsType
 param parOpenWebUIAppId string = ''
-param parFoundryName string = 'open-webui-app-foundry'
+param parFoundryName string = 'bw-open-webui-app-foundry'
 param parConfigureFoundry bool = false
 
 
 // ========== MARK: Variables ==========
-var varOpenWebUi = 'open-webui'
+var varOpenWebUi = 'bw-open-webui'
 var varNsgRules = loadJsonContent('./shared/nsg-rules.json')
 var varContainerAppEnvDefaultDomain = !empty(parContainerAppFqdn) ? join(skip(split(parContainerAppFqdn, '.'), 1), '.') : ''
 var varContainerAppName = !empty(parContainerAppFqdn) ? split(parContainerAppFqdn, '.')[0] : ''

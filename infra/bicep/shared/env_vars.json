@@ -1,0 +1,18 @@
+{
+  "nameSuffix": "bw-second-open",
+  "location": "centralus",
+  "subscriptionId": "3fab28e9-d6dd-4468-8e3a-ecfa0cff0498",
+  "subscriptionName": "open-sub-second",
+  "foundrySku": "open-sub-second",
+  "apimSku": "Developer", 
+  "appGatewaySku": "Standard_v2",
+  "publisherName":"Blake Ward",
+  "publisherEmail":"blakeward05@yahoo.com",
+  "roleDefinitions": {
+  "keyVaultSecretsUser": "4633458b-17de-408a-b874-0445c86b69e6",
+  "cognitiveServicesUser": "5e0bd9bd-7b93-4f28-af87-19fc36ad61bd",
+  "azureAIUser": "53ca6127-db72-4b80-b1b0-d745d6d5456d",
+  "monitoringMetricsPublisher": "3913510d-42f4-4e42-8a64-420c390055eb"
+  },
+  "sslCertificateSecretName":"ssl-appgw-bw-second-open"
+}
