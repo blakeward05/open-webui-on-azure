@@ -1,22 +1,23 @@
-targetScope = 'resourceGroup'
+targetScope = 'subscription'
 // ms graph extensibility
 extension 'br:mcr.microsoft.com/bicep/extensions/microsoftgraph/v1.0:1.0.0'
 
-// ========== Parameters ==========
+// MARK:========== Parameters ==========
+param parContainerAppEnvName string
+param parContainerAppScaleSettings object
+param parContainerName string
+param parKeyVaultUserIdRole string
 param parLocation string
+param parShareName string
+param parSpokeEnvManagedId string
 param parSpokeKeyVaultName string
 param parSpokeResourceGroupName string
-param parSpokeEnvManagedId string
-param parSubscriptionId string
-param parKeyVaultUserIdRole string
-param parContainerAppEnvName string
-param parContainerName string
-param parShareName string
 param parStorageAccountName string
+param parSubscriptionId string
 param parVolumeMount string
-param parContainerAppScaleSettings object
 
 
+// ========== MARK: Existing Resource ==========
 var varSpokeKeyVaultResourceId = resourceId(parSubscriptionId, parSpokeResourceGroupName, 'Microsoft.KeyVault/vaults', parSpokeKeyVaultName)
 
 resource spokeKeyVault 'Microsoft.KeyVault/vaults@2023-07-01' existing = {
@@ -39,7 +40,7 @@ module modContainerAppEnv 'br/public:avm/res/app/managed-environment:0.11.3' = {
     name: parContainerAppEnvName
     location: parLocation
     //appInsightsConnectionString: modAppInsights.outputs.connectionString
-    publicNetworkAccess: 'Enabled'
+    publicNetworkAccess: 'Disabled'
     zoneRedundant: false
     storages: [
       {

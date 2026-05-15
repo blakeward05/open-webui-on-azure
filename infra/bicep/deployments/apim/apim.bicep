@@ -5,20 +5,21 @@ extension 'br:mcr.microsoft.com/bicep/extensions/microsoftgraph/v1.0:1.0.0'
 
 
 // Parameters
+param parApimName string
+param parApimPublicIpName string
+param parApimSku string
+param parApimSubnetName string
+param parAppRegistrationName string
+param parFoundryEndpoint string
+param parHubAppInsightsName string
+param parHubLogAnalyticsWorkspaceName string
 param parHubResourceGroupName string
 param parHubVirtualNetworkName string
-param parApimName string
 param parLocation string
-param parApimSku string
-param parApimPublicIpName string
-param parApimSubnetName string
+param parMonitoringMetricsRole string
 param parPublisherEmail string
 param parPublisherName string
-param parHubLogAnalyticsWorkspaceName string
-param parHubAppInsightsName string
-param parMonitoringMetricsRole string
-param parFoundryEndpoint string
-param parAppRegistrationName string
+
 
 // ========== MARK: Existing Resource ==========
 resource logHubAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' existing = {
@@ -58,7 +59,6 @@ var parHubAppInsightsConnString = appInsights.properties.ConnectionString
 var parAppRegistrationId = appRegistration.id
 var parApimSubnetResourceId = appApimSubnet.id
 var parApimPublicIpResourceId = appApimPublicIp.id
-
 
 
 

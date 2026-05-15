@@ -1,16 +1,11 @@
-targetScope = 'resourceGroup'
+targetScope = 'subscription'
 // ms graph extensibility
 extension 'br:mcr.microsoft.com/bicep/extensions/microsoftgraph/v1.0:1.0.0'
 
 // ========== Parameters ==========
 param parLocation string
-param parPostgresServerName string
-param parSpokeKeyVaultName string
-param parSpokeResourceGroupName string
-@secure()
-@description('PostgreSQL administrator password. Pass inline via CLI: --parameters parPostgresAdminPassword=\'YourSecurePassword\'')
-param parPostgresAdminPassword string = ''
 @description('PostgreSQL Flexible Server configuration')
+
 param parPostgresConfig PostgresConfigType = {
   skuName: 'Standard_B1ms'
   tier: 'Burstable'
@@ -19,6 +14,12 @@ param parPostgresConfig PostgresConfigType = {
   databaseName: 'openwebui'
   adminUsername: 'pgadmin'
 }
+@secure()
+@description('PostgreSQL administrator password. Pass inline via CLI: --parameters parPostgresAdminPassword=\'YourSecurePassword\'')
+param parPostgresAdminPassword string = ''
+param parPostgresServerName string
+param parSpokeKeyVaultName string
+param parSpokeResourceGroupName string
 
 
 // ========== Type Imports ==========

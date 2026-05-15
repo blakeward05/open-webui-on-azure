@@ -5,21 +5,22 @@ extension 'br:mcr.microsoft.com/bicep/extensions/microsoftgraph/v1.0:1.0.0'
 
 // ========== MARK: Parameters ==========
 param parAppGatewayName string
-param parLocation string
 param parAppGatewayPublicIpName string
-param parHubResourceGroupName string
-param parSpokeResourceGroupName string
-param parHubKeyVaultName string
 param parAppGatewaySku string
-param parHubVirtualNetworkName string
 param parAppGwSubnetName string
-//param parContainerAppEnvName string
 param parContainerName string
+param parHubEnvManagedId string
+param parHubKeyVaultName string
+param parHubResourceGroupName string
+param parHubVirtualNetworkName string
+param parLocation string
+param parSpokeResourceGroupName string
+param parSslCertificateName string
+
+//FOR TRUSTING OUTSIDE DOMAIN
 //param parCustomDomain string
 //param parSpokeKeyVaultName string
 //aram parTrustedRootCertificateSecretName string
-param parSslCertificateName string
-param parHubEnvManagedId string
 //param parHubKeyVaultUri string
 
 
@@ -35,12 +36,6 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' existing = {
   name: parContainerName
 }
 
-/*
-resource containerAppEnv 'Microsoft.App/managedEnvironments@2026-01-01' existing = {
-  scope: resourceGroup(parSpokeResourceGroupName)
-  name: parContainerAppEnvName
-}
-  */
 
 resource hubEnvManagedId 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' existing = {
   scope: resourceGroup(parHubResourceGroupName)

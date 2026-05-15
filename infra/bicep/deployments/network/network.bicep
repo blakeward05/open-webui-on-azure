@@ -4,31 +4,32 @@ targetScope = 'subscription'
 
 
 // ========== MARK: Parameters ==========
-param parLocation string
-param parHubResourceGroupName string
-param parSpokeResourceGroupName string
-param parHubVirtualNetworkName string
-param parSpokeVirtualNetworkName string
-param parHubVirtualNetworkAddressPrefix string
-param parSpokeVirtualNetworkAddressPrefix string
-param parApimSubnetName string
-param parAppGwSubnetName string
-param parPeSubnetName string
-param parAcaSubnetName string
+param parAcaNsgName string
 param parAcaSubnetAddressPrefix string
-param parApimSubnetAddressPrefix string
-param parAppGatewaySubnetAddressPrefix string
-param parPeSubnetAddressPrefix string
-param parContainerAppEnvName string
-param parContainerName string
-param parAppGatewayDnsName string
-param parAppGwPublicIpName string
-param parApimPublicIpName string
+param parAcaSubnetName string
 param parApimDnsName string
 param parApimNsgName string
-param parAcaNsgName string
+param parApimPublicIpName string
 param parApimRouteName string
+param parApimSubnetAddressPrefix string
+param parApimSubnetName string
+param parAppGatewayDnsName string
+param parAppGatewaySubnetAddressPrefix string
+param parAppGwPublicIpName string
+param parAppGwSubnetName string
+param parContainerAppEnvName string
+param parContainerName string
+param parHubResourceGroupName string
+param parHubVirtualNetworkAddressPrefix string
+param parHubVirtualNetworkName string
+param parLocation string
+param parPeSubnetAddressPrefix string
+param parPeSubnetName string
+param parSpokeResourceGroupName string
+param parSpokeVirtualNetworkAddressPrefix string
+param parSpokeVirtualNetworkName string
 
+// ========== MARK: Existing Resources ==========
 resource containerAppEnv 'Microsoft.App/managedEnvironments@2026-01-01' existing = {
   scope: resourceGroup(parSpokeResourceGroupName)
   name: parContainerAppEnvName

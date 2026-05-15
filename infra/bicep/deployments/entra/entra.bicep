@@ -3,10 +3,11 @@ targetScope = 'subscription'
 extension 'br:mcr.microsoft.com/bicep/extensions/microsoftgraph/v1.0:1.0.0'
 
 // ========== MARK: Parameters ==========
-param parHubResourceGroupName string
 param parAppGwPublicIpName string
+param parHubResourceGroupName string
 
 
+// ========== MARK: Existing Resources ==========
 resource appGwPublicIp 'Microsoft.Network/publicIPAddresses@2023-11-01' existing = {
   scope: resourceGroup(parHubResourceGroupName)
   name: parAppGwPublicIpName

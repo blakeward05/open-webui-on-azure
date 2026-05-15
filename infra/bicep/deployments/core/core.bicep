@@ -10,20 +10,21 @@ import { TagsType } from '../../shared/types.bicep'
 
 
 // ========== MARK: Parameters ==========
-param parLocation string
-param parHubResourceGroupName string
-param parSpokeResourceGroupName string
-param parHubKeyVaultName string
-param parSpokeKeyVaultName string
-param parStorageAccountName string
-param parSpokeEnvManagedId string
-param parHubEnvManagedId string
-param parKeyVaultUserIdRole string
-param parShareName  string
-param parHubLogAnalyticsWorkspaceName string
 param parHubAppInsightsName string
-param parSpokeLogAnalyticsWorkspaceName string
+param parHubEnvManagedId string
+param parHubKeyVaultName string
+param parHubLogAnalyticsWorkspaceName string
+param parHubResourceGroupName string
+param parKeyVaultUserIdRole string
+param parLocation string
+param parShareName  string
 param parSpokeAppInsightsName string
+param parSpokeEnvManagedId string
+param parSpokeKeyVaultName string
+param parSpokeLogAnalyticsWorkspaceName string
+param parSpokeResourceGroupName string
+param parStorageAccountName string
+
 var parTags TagsType = {
   Application: 'Open WebUI'
   Environment: 'Demo'

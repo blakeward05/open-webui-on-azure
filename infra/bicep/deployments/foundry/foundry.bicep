@@ -1,13 +1,12 @@
-targetScope = 'resourceGroup'
+targetScope = 'subscription'
 // ms graph extensibility
 extension 'br:mcr.microsoft.com/bicep/extensions/microsoftgraph/v1.0:1.0.0'
 
 // ========== Parameters ==========
-param parLocation string
-param parSpokeResourceGroupName string
 param parFoundryName string
 param parFoundrySku string
-
+param parLocation string
+param parSpokeResourceGroupName string
 
 
 // MARK: - Microsoft Foundry (AI Services)
