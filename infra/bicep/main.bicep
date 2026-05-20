@@ -1,7 +1,13 @@
 targetScope = 'subscription'
+
 // ms graph extensibility
 extension 'br:mcr.microsoft.com/bicep/extensions/microsoftgraph/v1.0:1.0.0'
 
+//ORDER OF DEPLOYMENT
+// Core, Postgres, Container, Foundry, Network, Gateway, APIM
+
+// ===========MARK: Variables for What to Deploy
+param parStepsToDeploy object
 
 // ========== MARK: Parameters ==========
 param parAcaNsgName string
@@ -37,10 +43,14 @@ param parHubResourceGroupName string
 param parHubVirtualNetworkAddressPrefix string
 param parHubVirtualNetworkName string
 param parKeyVaultUserIdRole string
+param parKeyVaultAdminIdRole string
 param parLocation string
 param parMonitoringMetricsRole string
 param parPeSubnetAddressPrefix string
 param parPeSubnetName string
+@secure()
+@description('PostgreSQL administrator password. Pass inline via CLI: --parameters parPostgresAdminPassword=\'YourSecurePassword\'')
+param parPostgresAdminPassword string
 param parPostgresServerName string
 param parPublisherEmail string
 param parPublisherName string
@@ -60,13 +70,14 @@ param parVolumeMount string
 
 
 // MARK: - CORE First Step  Create Resource Groups, Identities etc
-module modCoreBuild './deployments/core/core.bicep' = {
+module modCoreBuild './deployments/core/core.bicep' = if (parStepsToDeploy.core == 1) {
   params: {
   parHubAppInsightsName:parHubAppInsightsName
   parHubEnvManagedId:parHubEnvManagedId
   parHubKeyVaultName:parHubKeyVaultName
   parHubLogAnalyticsWorkspaceName:parHubLogAnalyticsWorkspaceName
   parHubResourceGroupName:parHubResourceGroupName
+  parKeyVaultAdminIdRole:parKeyVaultAdminIdRole
   parKeyVaultUserIdRole:parKeyVaultUserIdRole
   parLocation:parLocation
   parShareName:parShareName
@@ -81,9 +92,10 @@ module modCoreBuild './deployments/core/core.bicep' = {
 
 
 // MARK: - CORE First Step  Create Resource Groups, Identities etc
-module modPostGresBuild './deployments/postgres/pgsql.bicep' = {
+module modPostGresBuild './deployments/postgres/pgsql.bicep' = if (parStepsToDeploy.postgres == 1) {
   params: {
   parLocation:parLocation
+  parPostgresAdminPassword:parPostgresAdminPassword
   parPostgresServerName:parPostgresServerName
   parSpokeKeyVaultName:parSpokeKeyVaultName
   parSpokeResourceGroupName:parSpokeResourceGroupName
@@ -95,45 +107,7 @@ module modPostGresBuild './deployments/postgres/pgsql.bicep' = {
 }
 
 // MARK: - CORE First Step  Create Resource Groups, Identities etc
-module modContainerBuild './deployments/container/aca.bicep' = {
-  params: {
-    parContainerAppEnvName:parContainerAppEnvName
-    parContainerAppScaleSettings:parContainerAppScaleSettings
-    parContainerName:parContainerName
-    parKeyVaultUserIdRole:parKeyVaultUserIdRole
-    parLocation:parLocation
-    parShareName:parShareName
-    parSpokeEnvManagedId:parSpokeEnvManagedId
-    parSpokeKeyVaultName:parSpokeKeyVaultName
-    parSpokeResourceGroupName:parSpokeResourceGroupName
-    parStorageAccountName:parStorageAccountName
-    parSubscriptionId:parSubscriptionId
-    parVolumeMount:parVolumeMount
-}
-  dependsOn: [
-    modCoreBuild
-    modPostGresBuild
-  ]
-}
-
-// MARK: - CORE First Step  Create Resource Groups, Identities etc
-module modFoundryBuild './deployments/foundry/foundry.bicep' = {
-  params: {
-    parLocation:parLocation
-    parSpokeResourceGroupName:parSpokeResourceGroupName
-    parFoundryName:parFoundryName
-    parFoundrySku:parFoundrySku
-
-}
-  dependsOn: [
-    modCoreBuild
-    modPostGresBuild
-    modContainerBuild
-  ]
-}
-
-// MARK: - CORE First Step  Create Resource Groups, Identities etc
-module modNetworkBuild './deployments/network/network.bicep' = {
+module modNetworkBuild './deployments/network/network.bicep' = if (parStepsToDeploy.network == 1) {
   params: {
     parAcaNsgName:parAcaNsgName
     parAcaSubnetAddressPrefix:parAcaSubnetAddressPrefix
@@ -168,11 +142,55 @@ module modNetworkBuild './deployments/network/network.bicep' = {
   ]
 }
 
+
 // MARK: - CORE First Step  Create Resource Groups, Identities etc
-module modEntraRegBuild './deployments/entra/entra.bicep' = {
+module modContainerBuild './deployments/container/aca.bicep' = if (parStepsToDeploy.container == 1) {
+  params: {
+    parAppGatewaySubnetAddressPrefix:parAppGatewaySubnetAddressPrefix
+    parContainerAppEnvName:parContainerAppEnvName
+    parContainerAppScaleSettings:parContainerAppScaleSettings
+    parContainerName:parContainerName
+    parKeyVaultUserIdRole:parKeyVaultUserIdRole
+    parLocation:parLocation
+    parShareName:parShareName
+    parSpokeEnvManagedId:parSpokeEnvManagedId
+    parSpokeKeyVaultName:parSpokeKeyVaultName
+    parSpokeResourceGroupName:parSpokeResourceGroupName
+    parAcaSubnetName:parAcaSubnetName
+    parSpokeVirtualNetworkName: parSpokeVirtualNetworkName
+    parStorageAccountName:parStorageAccountName
+    parSubscriptionId:parSubscriptionId
+    parVolumeMount:parVolumeMount
+}
+  dependsOn: [
+    modCoreBuild
+    modPostGresBuild
+  ]
+}
+
+// MARK: - CORE First Step  Create Resource Groups, Identities etc
+module modFoundryBuild './deployments/foundry/foundry.bicep' = if (parStepsToDeploy.foundry == 1) {
+  params: {
+    parLocation:parLocation
+    parSpokeResourceGroupName:parSpokeResourceGroupName
+    parFoundryName:parFoundryName
+    parFoundrySku:parFoundrySku
+
+}
+  dependsOn: [
+    modCoreBuild
+    modPostGresBuild
+    modContainerBuild
+  ]
+}
+
+
+// MARK: - CORE First Step  Create Resource Groups, Identities etc
+module modEntraRegBuild './deployments/entra/entra.bicep' = if (parStepsToDeploy.entra == 1) {
   params: {
     parAppGwPublicIpName:parAppGwPublicIpName
     parHubResourceGroupName:parHubResourceGroupName 
+    parAppRegistrationName: parAppRegistrationName
 
 }
   dependsOn: [
@@ -186,7 +204,36 @@ module modEntraRegBuild './deployments/entra/entra.bicep' = {
 
 
 // MARK: - CORE First Step  Create Resource Groups, Identities etc
-module modGatewayBuild './deployments/gateway/gateway.bicep' = {
+module modApimBuild './deployments/apim/apim.bicep' = if (parStepsToDeploy.apim == 1) {
+  params: {
+    parApimName:parApimName
+    parApimPublicIpName:parApimPublicIpName
+    parApimSku:parApimSku
+    parApimSubnetName:parApimSubnetName
+    parAppRegistrationName:parAppRegistrationName
+    parFoundryEndpoint:parFoundryEndpoint
+    parHubAppInsightsName:parHubAppInsightsName
+    parHubLogAnalyticsWorkspaceName:parHubLogAnalyticsWorkspaceName
+    parHubResourceGroupName:parHubResourceGroupName
+    parHubVirtualNetworkName:parHubVirtualNetworkName
+    parLocation:parLocation
+    parMonitoringMetricsRole:parMonitoringMetricsRole
+    parPublisherEmail:parPublisherEmail
+    parPublisherName:parPublisherName
+  }
+  dependsOn: [
+    modCoreBuild
+    modPostGresBuild
+    modContainerBuild
+    modFoundryBuild
+    modNetworkBuild
+    modEntraRegBuild
+  ]
+}
+
+
+// MARK: - CORE First Step  Create Resource Groups, Identities etc
+module modGatewayBuild './deployments/gateway/gateway.bicep' = if (parStepsToDeploy.gateway == 1) {
   params: {
     parAppGatewayName:parAppGatewayName
     parAppGatewayPublicIpName:parAppGatewayPublicIpName
@@ -214,34 +261,6 @@ module modGatewayBuild './deployments/gateway/gateway.bicep' = {
     modFoundryBuild
     modNetworkBuild
     modEntraRegBuild
-  ]
-}
-
-// MARK: - CORE First Step  Create Resource Groups, Identities etc
-module modApimBuild './deployments/apim/apim.bicep' = {
-  params: {
-    parApimName:parApimName
-    parApimPublicIpName:parApimPublicIpName
-    parApimSku:parApimSku
-    parApimSubnetName:parApimSubnetName
-    parAppRegistrationName:parAppRegistrationName
-    parFoundryEndpoint:parFoundryEndpoint
-    parHubAppInsightsName:parHubAppInsightsName
-    parHubLogAnalyticsWorkspaceName:parHubLogAnalyticsWorkspaceName
-    parHubResourceGroupName:parHubResourceGroupName
-    parHubVirtualNetworkName:parHubVirtualNetworkName
-    parLocation:parLocation
-    parMonitoringMetricsRole:parMonitoringMetricsRole
-    parPublisherEmail:parPublisherEmail
-    parPublisherName:parPublisherName
-  }
-  dependsOn: [
-    modCoreBuild
-    modPostGresBuild
-    modContainerBuild
-    modFoundryBuild
-    modNetworkBuild
-    modEntraRegBuild
-    modGatewayBuild
+    modApimBuild
   ]
 }

@@ -4,7 +4,7 @@ targetScope = 'subscription'
 extension 'br:mcr.microsoft.com/bicep/extensions/microsoftgraph/v1.0:1.0.0'
 
 
-// Parameters
+// ========== MARK: Parameters ==========
 param parApimName string
 param parApimPublicIpName string
 param parApimSku string

@@ -16,7 +16,7 @@ param parPostgresConfig PostgresConfigType = {
 }
 @secure()
 @description('PostgreSQL administrator password. Pass inline via CLI: --parameters parPostgresAdminPassword=\'YourSecurePassword\'')
-param parPostgresAdminPassword string = ''
+param parPostgresAdminPassword string 
 param parPostgresServerName string
 param parSpokeKeyVaultName string
 param parSpokeResourceGroupName string

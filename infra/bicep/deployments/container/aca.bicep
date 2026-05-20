@@ -3,6 +3,8 @@ targetScope = 'subscription'
 extension 'br:mcr.microsoft.com/bicep/extensions/microsoftgraph/v1.0:1.0.0'
 
 // MARK:========== Parameters ==========
+param parAcaSubnetName string
+param parAppGatewaySubnetAddressPrefix string
 param parContainerAppEnvName string
 param parContainerAppScaleSettings object
 param parContainerName string
@@ -12,6 +14,7 @@ param parShareName string
 param parSpokeEnvManagedId string
 param parSpokeKeyVaultName string
 param parSpokeResourceGroupName string
+param parSpokeVirtualNetworkName string
 param parStorageAccountName string
 param parSubscriptionId string
 param parVolumeMount string
@@ -32,6 +35,17 @@ resource spokeEnvManagedId 'Microsoft.ManagedIdentity/userAssignedIdentities@202
   scope: resourceGroup(parSpokeResourceGroupName)
 }
 
+resource spokeVirtualNet 'Microsoft.Network/virtualNetworks@2025-05-01' existing = {
+  scope: resourceGroup(parSpokeResourceGroupName)
+  name: parSpokeVirtualNetworkName
+}
+
+resource acaSubnet 'Microsoft.Network/virtualNetworks/subnets@2025-05-01' existing = {
+  name: parAcaSubnetName
+  parent: spokeVirtualNet
+}
+
+
 
 // MARK: - Container App Environment
 module modContainerAppEnv 'br/public:avm/res/app/managed-environment:0.11.3' = {
@@ -50,9 +64,8 @@ module modContainerAppEnv 'br/public:avm/res/app/managed-environment:0.11.3' = {
         storageAccountName: parStorageAccountName
       }
     ]
-    internal: false
-    //REMOVING REFERENCE TO SUBNET HERE ON APP ENVIRONMENT
-    //infrastructureSubnetResourceId: modVirtualNetwork.outputs.subnetResourceIds[0]
+    internal: true
+    infrastructureSubnetResourceId: acaSubnet.id
     managedIdentities: {
       systemAssigned: true
       userAssignedResourceIds: [
@@ -72,6 +85,30 @@ module modContainerAppEnv 'br/public:avm/res/app/managed-environment:0.11.3' = {
   }
 }
 
+// Private DNS Zone for Container App
+module modPrivateDnsZone 'br/public:avm/res/network/private-dns-zone:0.8.0' = {
+  scope: resourceGroup(parSpokeResourceGroupName)
+  name: 'privateDnsZone'
+  params: {
+    name: modContainerAppEnv.outputs.defaultDomain
+    location: 'global'
+    a: [
+      {
+        name: parContainerName
+        ttl: 3600
+        aRecords: [
+          { ipv4Address: modContainerAppEnv.outputs.staticIp }
+        ]
+      }
+    ]
+    virtualNetworkLinks: [
+      {
+        virtualNetworkResourceId: spokeVirtualNet.id
+        registrationEnabled: false
+      }
+    ]
+  }
+}
 
 // MARK: - Container App
 module modContainerApp 'br/public:avm/res/app/container-app:0.19.0' = {
@@ -80,9 +117,12 @@ module modContainerApp 'br/public:avm/res/app/container-app:0.19.0' = {
     name: parContainerName
     ingressTargetPort: 8080
     stickySessionsAffinity: 'sticky'
-    /*
-    //IGNORING SECURITY AND NETWORKING FOR NOW
-    //ipSecurityRestrictions: !empty(parContainerAppAllowedIpAddresses) ? varIpSecurityRestrictions : []
+    ipSecurityRestrictions: [{
+          name: 'allow-appgw-ip'
+          ipAddressRange: parAppGatewaySubnetAddressPrefix
+          action: 'Allow'
+        }]
+          /*
     customDomains: [
       {
         name: parCustomDomain

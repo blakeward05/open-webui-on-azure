@@ -5,6 +5,7 @@ extension 'br:mcr.microsoft.com/bicep/extensions/microsoftgraph/v1.0:1.0.0'
 // ========== MARK: Parameters ==========
 param parAppGwPublicIpName string
 param parHubResourceGroupName string
+param parAppRegistrationName string
 
 
 // ========== MARK: Existing Resources ==========
@@ -15,20 +16,18 @@ resource appGwPublicIp 'Microsoft.Network/publicIPAddresses@2023-11-01' existing
 
 
 // ========== MARK: Variables ==========
-var config = loadJsonContent('../../shared/env_vars.json')
-var varAppRegistrationName string = 'app-reg-${config.nameSuffix}-entra'
 var varAppGwPublicIpDns = appGwPublicIp.properties.dnsSettings.fqdn
 
 
 
 // MARK: - Entra ID App Registration
 resource resEntraIdApp 'Microsoft.Graph/applications@v1.0' = {
-  displayName: varAppRegistrationName
-  uniqueName: varAppRegistrationName
+  displayName: parAppRegistrationName
+  uniqueName: parAppRegistrationName
   signInAudience: 'AzureADMyOrg'
   isFallbackPublicClient: true
   groupMembershipClaims: 'SecurityGroup'
-  identifierUris: ['api://${varAppRegistrationName}']
+  identifierUris: ['api://${parAppRegistrationName}']
   owners: {
     relationships: [
       deployer().objectId
@@ -39,7 +38,7 @@ resource resEntraIdApp 'Microsoft.Graph/applications@v1.0' = {
       allowedMemberTypes: ['User']
       description: 'Administrator role with full access to Open WebUI'
       displayName: 'Administrator'
-      id: guid(varAppRegistrationName, 'admin')
+      id: guid(parAppRegistrationName, 'admin')
       isEnabled: true
       value: 'admin'
     }
@@ -47,7 +46,7 @@ resource resEntraIdApp 'Microsoft.Graph/applications@v1.0' = {
       allowedMemberTypes: ['User']
       description: 'Standard user role with default permissions'
       displayName: 'User'
-      id: guid(varAppRegistrationName, 'user')
+      id: guid(parAppRegistrationName, 'user')
       isEnabled: true
       value: 'user'
     }
@@ -84,7 +83,7 @@ resource resEntraIdApp 'Microsoft.Graph/applications@v1.0' = {
       {
         adminConsentDescription: 'Allow the application to access Open WebUI on behalf of the signed-in user'
         adminConsentDisplayName: 'Access Open WebUI'
-        id: guid(varAppRegistrationName, 'user_impersonation')
+        id: guid(parAppRegistrationName, 'user_impersonation')
         isEnabled: true
         type: 'User'
         userConsentDescription: 'Allow the application to access Open WebUI on your behalf'

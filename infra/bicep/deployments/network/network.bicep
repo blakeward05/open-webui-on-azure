@@ -192,30 +192,7 @@ module modVnetSpokePeering'./network_spoke_peering.bicep' = {
   ]
 }
 
-// Private DNS Zone for Container App
-module modPrivateDnsZone 'br/public:avm/res/network/private-dns-zone:0.8.0' = {
-  scope: resourceGroup(parSpokeResourceGroupName)
-  name: 'privateDnsZone'
-  params: {
-    name: parContainerAppEnvDefaultDomain
-    location: 'global'
-    a: [
-      {
-        name: parContainerName
-        ttl: 3600
-        aRecords: [
-          { ipv4Address: parContainerAppStaticIp }
-        ]
-      }
-    ]
-    virtualNetworkLinks: [
-      {
-        virtualNetworkResourceId: modSpokeVirtualNetwork.outputs.resourceId
-        registrationEnabled: false
-      }
-    ]
-  }
-}
+
 
 // Private DNS Zone for APIM (Internal mode) - A record will be created after APIM deployment
 module modApimPrivateDnsZone 'br/public:avm/res/network/private-dns-zone:0.8.0' = {
